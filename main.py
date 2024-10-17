@@ -60,9 +60,6 @@ def make_kraken_request(api_key, api_secret, url_path, payload):
         # Decode the response
         response_json = json.loads(data.decode("utf-8"))
 
-        # Print the raw response for debugging
-        print(f"Response: {response_json}")
-
         if res.status != 200:
             print(f"Error: {res.status} {res.reason}")
             return None
@@ -76,7 +73,7 @@ def make_kraken_request(api_key, api_secret, url_path, payload):
 
 # Main function to check the balance
 def check_kraken_balance():
-    """Checks the account balance on Kraken and handles the response."""
+    """Checks the account balance on Kraken."""
     try:
         # Fetch API key and secret from environment variables
         API_KEY = get_env_variable('KRAKEN_API_KEY')
@@ -104,6 +101,50 @@ def check_kraken_balance():
     except Exception as ex:
         print(f"Unexpected Error: {str(ex)}")
 
+# Function to place an order on Kraken
+def place_order(pair, type, ordertype, volume, price=None):
+    """Places an order on Kraken."""
+    try:
+        # Fetch API key and secret from environment variables
+        API_KEY = get_env_variable('KRAKEN_API_KEY')
+        API_SECRET = get_env_variable('KRAKEN_API_SECRET')
+
+        # Define the endpoint path
+        url_path = "/0/private/AddOrder"
+
+        # Set up the payload for the order
+        payload = {
+            'pair': pair,
+            'type': type,
+            'ordertype': ordertype,
+            'volume': volume,
+        }
+
+        # If it's a limit order, add the price
+        if ordertype == 'limit' and price:
+            payload['price'] = price
+
+        # Make the API request to place the order
+        response_json = make_kraken_request(API_KEY, API_SECRET, url_path, payload)
+
+        # Handle and display the response
+        if response_json:
+            if 'error' in response_json and response_json['error']:
+                print(f"API Error: {response_json['error']}")
+            else:
+                print(f"Order Placed: {response_json['result']}")
+        else:
+            print("Failed to place the order.")
+    except ValueError as ve:
+        print(f"Configuration Error: {ve}")
+    except Exception as ex:
+        print(f"Unexpected Error: {str(ex)}")
+
 # Entry point of the script
 if __name__ == "__main__":
+    print("Checking Kraken balance...")
     check_kraken_balance()
+    print("Placing an order on Kraken...")
+    place_order('BTCUSD', 'sell', 'market', '0.01')
+
+
