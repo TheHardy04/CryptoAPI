@@ -7,78 +7,103 @@ import hmac
 import base64
 import time
 
-# Set up Kraken API key and secret
-API_KEY = os.getenv('KRAKEN_API_KEY')  # Your API Key
-API_SECRET = os.getenv('KRAKEN_API_SECRET')  # Your API Secret
+# Function to retrieve environment variables
+def get_env_variable(name, default=None):
+    """Fetches the environment variable or raises an error if not set."""
+    value = os.getenv(name, default)
+    if value is None:
+        raise ValueError(f"Environment variable '{name}' not found.")
+    return value
 
+# Function to generate the Kraken API signature
 def get_kraken_signature(urlpath, data, secret):
+    """Generates the HMAC-SHA512 signature required by Kraken's API."""
     postdata = urllib.parse.urlencode(data)
     encoded = (str(data['nonce']) + postdata).encode()
     message = urlpath.encode() + hashlib.sha256(encoded).digest()
 
     signature = hmac.new(base64.b64decode(secret), message, hashlib.sha512)
-    sigdigest = base64.b64encode(signature.digest())
+    return base64.b64encode(signature.digest()).decode()
 
-    return sigdigest.decode()
+# Function to make the Kraken API request
+def make_kraken_request(api_key, api_secret, url_path, payload):
+    """Sends a request to Kraken's API and returns the parsed response."""
+    # Add nonce to the payload
+    nonce = str(int(time.time() * 1000))
+    payload['nonce'] = nonce
 
-# Ensure the API key and secret are set
-if not API_KEY or not API_SECRET:
-    raise ValueError("API key or secret not found in environment variables.")
+    # Form-encode the payload
+    encoded_payload = urllib.parse.urlencode(payload)
 
-# Nonce (current timestamp in milliseconds)
-nonce = str(int(time.time() * 1000))
+    # Generate the API signature
+    api_sign = get_kraken_signature(url_path, payload, api_secret)
 
-# Set up payload (including nonce)
-payload = {
-    "nonce": nonce
-}
-encoded_payload = urllib.parse.urlencode(payload)
+    # Set up headers (API-Key and API-Sign)
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+        'API-Key': api_key,
+        'API-Sign': api_sign
+    }
 
-# Generate the API signature
-api_sign = get_kraken_signature("/0/private/Balance", payload, API_SECRET)
+    # Set up connection to Kraken API
+    conn = http.client.HTTPSConnection("api.kraken.com")
 
-# Debugging outputs for verification
-print("Nonce:", nonce)
-print("Encoded Payload:", encoded_payload)
-print("API Key:", API_KEY)
-print("API Sign:", api_sign)
+    try:
+        # Send the POST request to the specified endpoint
+        conn.request("POST", url_path, encoded_payload, headers)
 
-# Set up headers (API-Key and API-Sign)
-headers = {
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'Accept': 'application/json',
-    'API-Key': API_KEY,
-    'API-Sign': api_sign
-}
+        # Get the response
+        res = conn.getresponse()
+        data = res.read()
 
-# Set up connection to Kraken API
-conn = http.client.HTTPSConnection("api.kraken.com")
+        # Decode the response
+        response_json = json.loads(data.decode("utf-8"))
 
-# Send the POST request to the private balance endpoint
-conn.request("POST", "/0/private/Balance", encoded_payload, headers)
+        # Print the raw response for debugging
+        print(f"Response: {response_json}")
 
-# Get the response
-res = conn.getresponse()
-data = res.read()
+        if res.status != 200:
+            print(f"Error: {res.status} {res.reason}")
+            return None
 
-# Decode the response
-response_json = json.loads(data.decode("utf-8"))
+        return response_json
+    except Exception as e:
+        print(f"An error occurred during the API request: {str(e)}")
+        return None
+    finally:
+        conn.close()
 
-print("Response:", response_json)
-# Check if the balance is empty
-if res.status == 200:
-    if not response_json['result']:
-        print("Your balance is empty.")
-    else:
-        print("Balance:", response_json['result'])
-else:
-    print(f"Error: {res.status} {res.reason}")
+# Main function to check the balance
+def check_kraken_balance():
+    """Checks the account balance on Kraken and handles the response."""
+    try:
+        # Fetch API key and secret from environment variables
+        API_KEY = get_env_variable('KRAKEN_API_KEY')
+        API_SECRET = get_env_variable('KRAKEN_API_SECRET')
 
+        # Define the endpoint path
+        url_path = "/0/private/Balance"
 
+        # Make the API request to get the account balance
+        payload = {}
+        response_json = make_kraken_request(API_KEY, API_SECRET, url_path, payload)
 
-# Print the response (which contains your balance or an error)
-print(data.decode("utf-8"))
+        # Handle and display the response
+        if response_json:
+            if 'error' in response_json and response_json['error']:
+                print(f"API Error: {response_json['error']}")
+            elif not response_json['result']:
+                print("Your balance is empty.")
+            else:
+                print(f"Balance: {response_json['result']}")
+        else:
+            print("Failed to retrieve a valid response from Kraken.")
+    except ValueError as ve:
+        print(f"Configuration Error: {ve}")
+    except Exception as ex:
+        print(f"Unexpected Error: {str(ex)}")
 
-# Optionally, handle errors
-if res.status != 200:
-    print(f"Error: {res.status} {res.reason}")
+# Entry point of the script
+if __name__ == "__main__":
+    check_kraken_balance()
