@@ -1,2 +1,5 @@
 
 /CryptoAPI_PY/.idea
+/CryptoAPI_CPP/.vs
+/CryptoAPI_CPP/bin
+*.user
