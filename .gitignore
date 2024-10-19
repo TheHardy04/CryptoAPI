@@ -3,3 +3,5 @@
 /CryptoAPI_CPP/.vs
 /CryptoAPI_CPP/bin
 *.user
+CryptoAPI_CPP/vcpkg-configuration.json
+CryptoAPI_CPP/vcpkg.json
