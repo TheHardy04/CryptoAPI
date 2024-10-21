@@ -18,11 +18,17 @@ def get_env_variable(name, default=None):
 # Function to generate the Kraken API signature
 def get_kraken_signature(urlpath, data, secret):
     """Generates the HMAC-SHA512 signature required by Kraken's API."""
+    # Convert the data dictionary to a query string (url-encoded)
     postdata = urllib.parse.urlencode(data)
+    # Include the nonce in the POST data and encode it
     encoded = (str(data['nonce']) + postdata).encode()
+    # Prepend the urlpath and hash the POST data
     message = urlpath.encode() + hashlib.sha256(encoded).digest()
 
+    # Create a new HMAC-SHA512 keyed with the API secret
     signature = hmac.new(base64.b64decode(secret), message, hashlib.sha512)
+
+    # Return the base64-encoded result
     return base64.b64encode(signature.digest()).decode()
 
 # Function to make the Kraken API request
@@ -30,10 +36,13 @@ def make_kraken_request(api_key, api_secret, url_path, payload):
     """Sends a request to Kraken's API and returns the parsed response."""
     # Add nonce to the payload
     nonce = str(int(time.time() * 1000))
+    # nonce = "1234567890"  # TEST
     payload['nonce'] = nonce
 
     # Form-encode the payload
     encoded_payload = urllib.parse.urlencode(payload)
+
+    print(f"encoded_payload: {encoded_payload}")
 
     # Generate the API signature
     api_sign = get_kraken_signature(url_path, payload, api_secret)
@@ -48,6 +57,8 @@ def make_kraken_request(api_key, api_secret, url_path, payload):
 
     # Set up connection to Kraken API
     conn = http.client.HTTPSConnection("api.kraken.com")
+    # Enable HTTP/HTTPS debugging output
+    http.client.HTTPConnection.debuglevel = 1  # DEBUG
 
     try:
         # Send the POST request to the specified endpoint
@@ -59,6 +70,8 @@ def make_kraken_request(api_key, api_secret, url_path, payload):
 
         # Decode the response
         response_json = json.loads(data.decode("utf-8"))
+
+        print(f"response_json: {response_json}")
 
         if res.status != 200:
             print(f"Error: {res.status} {res.reason}")
@@ -144,7 +157,7 @@ def place_order(pair, type, ordertype, volume, price=None):
 if __name__ == "__main__":
     print("Checking Kraken balance...")
     check_kraken_balance()
-    print("Placing an order on Kraken...")
-    place_order('BTCUSD', 'sell', 'market', '0.01')
+    # print("Placing an order on Kraken...")
+    # place_order('BTCUSD', 'sell', 'market', '0.01')
 
 

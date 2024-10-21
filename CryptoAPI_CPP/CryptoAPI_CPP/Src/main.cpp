@@ -1,5 +1,5 @@
 #include <iostream>
-#include <chrono>  
+#include <vector>
 #include <string>
 #include <map>
 #include <ctime>
@@ -10,7 +10,16 @@
 #include <openssl/buffer.h>
 #include <sstream>
 #include <iomanip>
-#include <cstdlib>
+#include <chrono>
+
+// Function to get the current timestamp in milliseconds
+std::string get_current_timestamp() {
+    // Get the current time in seconds since the epoch
+    auto now = std::chrono::system_clock::now();
+    auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+    // Convert milliseconds to string
+    return std::to_string(milliseconds);
+}
 
 // URL encode helper function
 std::string url_encode(const std::string& value) {
@@ -21,8 +30,19 @@ std::string url_encode(const std::string& value) {
     curl_easy_cleanup(curl);
     return result;
 }
+// Function to encode a map into a URL-encoded string
+std::string encode_map(const std::map<std::string, std::string>& map) {
+	std::ostringstream os;
+	for (auto const& pair : map) {
+		if (os.tellp() != 0) {
+			os << "&";
+		}
+        os << url_encode(pair.first) << "=" << url_encode(pair.second);
+	}
+	return os.str();
+}
 
-// Base64 encode function
+// Base64 encode function done with ChatGPT
 std::string base64_encode(const unsigned char* input, int length) {
     BIO* bmem, * b64;
     BUF_MEM* bptr;
@@ -38,18 +58,50 @@ std::string base64_encode(const unsigned char* input, int length) {
     return output;
 }
 
+// Function to Base64-decode a string done with ChatGPT
+std::string base64_decode(const std::string& encoded) {
+    BIO* b64 = BIO_new(BIO_f_base64());
+    BIO* bio = BIO_new_mem_buf(encoded.data(), static_cast<int>(encoded.size()));
+    bio = BIO_push(b64, bio);
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL); // No newlines in output
+    std::vector<char> decoded(encoded.size() * 3 / 4); // Approximate size
+    int len = BIO_read(bio, decoded.data(), static_cast<int>(decoded.size()));
+    BIO_free_all(bio);
+    return std::string(decoded.begin(), decoded.begin() + len);
+}
+
 // HMAC-SHA512 signature generator
-std::string get_kraken_signature(const std::string& urlpath, const std::string& postdata, const std::string& secret) {
-    unsigned char* decoded_secret = (unsigned char*)malloc(secret.length());
-    int len = EVP_DecodeBlock(decoded_secret, (unsigned char*)secret.c_str(), static_cast<int>(secret.length()));
+std::string get_kraken_signature(const std::string& urlpath, std::map<std::string,std::string>& data, const std::string& secret) {
+    
+	// Encode the data map into a URL-encoded string
+	std::string postdata = encode_map(data);
 
+	// Combine the URL path and the POST data
+	std::string encoded = url_encode(data["nonce"])+postdata;
+
+	// Generate SHA256 hash and combine it with the URL path
     unsigned char hash[SHA256_DIGEST_LENGTH];
-    SHA256((unsigned char*)postdata.c_str(), postdata.length(), hash);
+    SHA256(reinterpret_cast<const unsigned char*>(encoded.c_str()),encoded.length(),hash);
+	size_t combined_size = urlpath.length() + SHA256_DIGEST_LENGTH;
+    unsigned char* combined = new unsigned char[combined_size];
+	memcpy(combined, urlpath.c_str(), urlpath.length());
+	memcpy(combined + urlpath.length(), hash, SHA256_DIGEST_LENGTH);
 
-    unsigned char* result = HMAC(EVP_sha512(), decoded_secret, len, hash, SHA256_DIGEST_LENGTH, NULL, NULL);
-    free(decoded_secret);
+	// Decode the secret key in base64
+	std::string secret_b64 = base64_decode(secret);
 
-    return base64_encode(result, SHA512_DIGEST_LENGTH);
+	// Generate the HMAC-SHA512 signature
+    unsigned char* result;
+    unsigned int len = SHA512_DIGEST_LENGTH;
+    result = (unsigned char*)malloc(len);
+    HMAC(EVP_sha512(), secret_b64.c_str(), secret_b64.length(), combined, combined_size,result, &len);
+	std::string signature = base64_encode(result, len);
+
+	// Cleanup
+	delete[] combined;
+	free(result);
+
+	return signature;
 }
 
 // CURL response handler
@@ -60,7 +112,7 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* use
 }
 
 // Function to make the Kraken API request
-std::string make_kraken_request(const std::string& api_key, const std::string& api_secret, const std::string& url_path, const std::map<std::string, std::string>& payload) {
+std::string make_kraken_request(const std::string& api_key, const std::string& api_secret, const std::string& url_path, std::map<std::string, std::string>& payload) {
     CURL* curl;
     CURLcode res;
     std::string response;
@@ -69,28 +121,42 @@ std::string make_kraken_request(const std::string& api_key, const std::string& a
     curl = curl_easy_init();
 
     if (curl) {
-        std::string postfields;
-        auto now = std::chrono::system_clock::now();
-        auto duration = now.time_since_epoch();
-        long long nonce = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();  // Get time in milliseconds
-        postfields += "nonce=" + std::to_string(nonce);
 
-        for (const auto& pair : payload) {
-            postfields += "&" + pair.first + "=" + url_encode(pair.second);
-        }
+        // Enable verbose output to see what is being sent
+        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        std::string nonce = get_current_timestamp();
+		// std::string nonce = "1234567890";  // TEST
+		payload["nonce"] = nonce;
 
-		std::cout << "Postfields: " << postfields << std::endl;
+		
+        std::string signature = get_kraken_signature(url_path, payload, api_secret);
 
-        std::string signature = get_kraken_signature(url_path, postfields, api_secret);
+        std::string encoded_payload = encode_map(payload);
+
 
         struct curl_slist* headers = nullptr;
-		headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
-		headers = curl_slist_append(headers, "Accept: application/json");
+        headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
+        headers = curl_slist_append(headers, "Accept: application/json");
         headers = curl_slist_append(headers, ("API-Key: " + api_key).c_str());
         headers = curl_slist_append(headers, ("API-Sign: " + signature).c_str());
 
+		struct curl_slist* temp = headers;  // DEBUG
+        while (temp != nullptr) {
+            std::cout << "Header: " << temp->data << std::endl;
+            temp = temp->next;
+       }
+
+		//std::cout << "urlpath : " << "https://api.kraken.com" + url_path << std::endl;  // DEBUG
+		std::cout << "postdata : " << encoded_payload << "/ Length :" << encoded_payload.size() << std::endl;  // DEBUG
+		//std::cout << "nonce : " << nonce << std::endl;  // DEBUG
+
+        
+        
         curl_easy_setopt(curl, CURLOPT_URL, ("https://api.kraken.com" + url_path).c_str());
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postfields.c_str());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, encoded_payload.c_str());
+        curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "identity");
+		// curl_easy_setopt(curl, CURLOPT_IGNORE_CONTENT_LENGTH, std::to_string(encode_map(payload).length()).c_str());
+
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
@@ -116,6 +182,7 @@ void check_kraken_balance() {
 
     _dupenv_s(&api_key, &len, "KRAKEN_API_KEY");
     _dupenv_s(&api_secret, &len, "KRAKEN_API_SECRET");
+	//_dupenv_s(&api_secret, &len, "KRAKEN_TEST_KEY");  // TEST
 
     if (!api_key || !api_secret) {
         std::cerr << "API key or secret not found in environment variables." << std::endl;
@@ -149,8 +216,6 @@ void place_order(const std::string& pair, const std::string& type, const std::st
         return;
     }
 
-	std::cout << "API Key: " << api_key << std::endl;
-
     std::map<std::string, std::string> payload = {
         {"pair", pair},
         {"type", type},
@@ -168,13 +233,64 @@ void place_order(const std::string& pair, const std::string& type, const std::st
     free(api_key);
     free(api_secret);
 }
+//TEST 
+// Function to send a POST request
+void send_post_request(const std::string & url, const std::string & postdata) {
+    CURL* curl;
+    CURLcode res;
+    std::string response;
+
+    // Initialize libcurl
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+
+    if (curl) {
+        // Enable verbose output to see what is being sent
+        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+
+        // Set the URL for the POST request
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+
+        // Set the POST data
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postdata.c_str());
+
+        // Set the function to handle the response
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+
+        // Perform the request
+        res = curl_easy_perform(curl);
+
+        // Check for errors
+        if (res != CURLE_OK) {
+            std::cerr << "CURL error: " << curl_easy_strerror(res) << std::endl;
+        }
+        else {
+            // Print the server's response
+            std::cout << "Response: " << response << std::endl;
+        }
+
+        // Clean up
+        curl_easy_cleanup(curl);
+    }
+
+    // Clean up libcurl global environment
+    curl_global_cleanup();
+}
 
 int main() {
+    //// Example URL and POST data
+    //std::string url = "https://jsonplaceholder.typicode.com/posts";
+    //std::string postdata = "title=foo&body=bar&userId=1";
+
+    //// Send the POST request
+    //send_post_request(url, postdata);
+
     std::cout << "Checking Kraken balance..." << std::endl;
     check_kraken_balance();
 
-    //std::cout << "Placing an order on Kraken..." << std::endl;
-    //place_order("BTCUSD", "sell", "market", "0.01");
+    // std::cout << "Placing an order on Kraken..." << std::endl;
+    // place_order("BTCUSD", "sell", "market", "0.01");
 
     return 0;
 }
