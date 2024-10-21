@@ -165,10 +165,10 @@ std::string make_kraken_request(const std::string& api_key, const std::string& a
 // Function to check Kraken balance
 void check_kraken_balance() {
 
-#ifdef _WIN32
-    // Windows-specific code
     char* api_key = nullptr;
     char* api_secret = nullptr;
+#ifdef _WIN32
+
 
     size_t len = 0;
     _dupenv_s(&api_key, &len, "KRAKEN_API_KEY");
@@ -177,8 +177,8 @@ void check_kraken_balance() {
 
 #else
     // Linux-specific code
-    char* api_key = getenv("KRAKEN_API_KEY");
-    char* api_secret = getenv("KRAKEN_API_SECRET");
+    api_key = getenv("KRAKEN_API_KEY");
+    api_secret = getenv("KRAKEN_API_SECRET");
 #endif
 
     if (!api_key || !api_secret) {
@@ -215,8 +215,8 @@ void place_order(const std::string& pair, const std::string& type, const std::st
 
 #else
     // Linux-specific code
-    char* api_key = getenv("KRAKEN_API_KEY");
-    char* api_secret = getenv("KRAKEN_API_SECRET");
+    api_key = getenv("KRAKEN_API_KEY");
+    api_secret = getenv("KRAKEN_API_SECRET");
 #endif
 
     if (!api_key || !api_secret) {
