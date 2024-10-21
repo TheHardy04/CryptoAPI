@@ -170,8 +170,6 @@ void check_kraken_balance() {
     size_t len = 0;
 
 #ifdef _WIN32
-
-
     _dupenv_s(&api_key, &len, "KRAKEN_API_KEY");
     _dupenv_s(&api_secret, &len, "KRAKEN_API_SECRET");
     //_dupenv_s(&api_secret, &len, "KRAKEN_TEST_KEY");  // TEST
@@ -203,9 +201,7 @@ void place_order(const std::string& pair, const std::string& type, const std::st
     char* api_secret = nullptr;
     size_t len = 0;
 
-	// Get the API key and secret from environment variables
 #ifdef _WIN32
-// Windows-specific code
     _dupenv_s(&api_key, &len, "KRAKEN_API_KEY");
     _dupenv_s(&api_secret, &len, "KRAKEN_API_SECRET");
     //_dupenv_s(&api_secret, &len, "KRAKEN_TEST_KEY");  // TEST
