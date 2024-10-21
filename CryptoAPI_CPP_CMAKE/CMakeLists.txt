@@ -15,7 +15,7 @@ include_directories(Dependencies/Curl/include)     # Path to cURL headers
 
 # Add source files
 set(SOURCES
-    src/main.cpp
+    Src/main.cpp
 )
 
 # Add executable
