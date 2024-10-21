@@ -191,8 +191,6 @@ void check_kraken_balance() {
     std::string response = make_kraken_request(api_key, api_secret, "/0/private/Balance", payload);
     std::cout << "Balance Response: " << response << std::endl;
 
-    free(api_key);
-    free(api_secret);
 }
 
 // Function to place an order on Kraken
@@ -233,8 +231,6 @@ void place_order(const std::string& pair, const std::string& type, const std::st
     std::string response = make_kraken_request(api_key, api_secret, "/0/private/AddOrder", payload);
     std::cout << "Order Response: " << response << std::endl;
 
-    free(api_key);
-    free(api_secret);
 }
 
 
