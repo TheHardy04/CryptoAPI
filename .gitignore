@@ -5,3 +5,5 @@
 *.user
 CryptoAPI_CPP/vcpkg-configuration.json
 CryptoAPI_CPP/vcpkg.json
+/CryptoAPI_CPP_CMAKE/.vs
+/CryptoAPI_CPP_CMAKE/out
