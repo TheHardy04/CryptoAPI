@@ -8,6 +8,8 @@
 #include <openssl/sha.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
+#include <cstring>
+#include <cstdlib>
 #include <sstream>
 #include <iomanip>
 #include <chrono>
