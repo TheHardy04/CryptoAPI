@@ -176,8 +176,8 @@ void check_kraken_balance() {
     
 #else
     // Linux-specific code
-    const char* api_key = getenv("KRAKEN_API_KEY");
-    const char* api_secret = getenv("KRAKEN_API_SECRET");
+    char* api_key = getenv("KRAKEN_API_KEY");
+    char* api_secret = getenv("KRAKEN_API_SECRET");
 #endif
 	//_dupenv_s(&api_secret, &len, "KRAKEN_TEST_KEY");  // TEST
 
