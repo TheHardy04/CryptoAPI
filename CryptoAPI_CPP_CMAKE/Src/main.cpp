@@ -164,12 +164,21 @@ std::string make_kraken_request(const std::string& api_key, const std::string& a
 
 // Function to check Kraken balance
 void check_kraken_balance() {
+
+#ifdef _WIN32
+    // Windows-specific code
     char* api_key = nullptr;
     char* api_secret = nullptr;
-    size_t len;
 
+    size_t len = 0;
     _dupenv_s(&api_key, &len, "KRAKEN_API_KEY");
     _dupenv_s(&api_secret, &len, "KRAKEN_API_SECRET");
+    
+#else
+    // Linux-specific code
+    const char* api_key = getenv("KRAKEN_API_KEY");
+    const char* api_secret = getenv("KRAKEN_API_SECRET");
+#endif
 	//_dupenv_s(&api_secret, &len, "KRAKEN_TEST_KEY");  // TEST
 
     if (!api_key || !api_secret) {
