@@ -42,7 +42,6 @@ def make_kraken_request(api_key, api_secret, url_path, payload):
     # Form-encode the payload
     encoded_payload = urllib.parse.urlencode(payload)
 
-    print(f"encoded_payload: {encoded_payload}")
 
     # Generate the API signature
     api_sign = get_kraken_signature(url_path, payload, api_secret)
@@ -58,7 +57,7 @@ def make_kraken_request(api_key, api_secret, url_path, payload):
     # Set up connection to Kraken API
     conn = http.client.HTTPSConnection("api.kraken.com")
     # Enable HTTP/HTTPS debugging output
-    http.client.HTTPConnection.debuglevel = 1  # DEBUG
+    # http.client.HTTPConnection.debuglevel = 1  # DEBUG
 
     try:
         # Send the POST request to the specified endpoint
@@ -157,7 +156,7 @@ def place_order(pair, type, ordertype, volume, price=None):
 if __name__ == "__main__":
     print("Checking Kraken balance...")
     check_kraken_balance()
-    # print("Placing an order on Kraken...")
-    # place_order('BTCUSD', 'sell', 'market', '0.01')
+    print("Placing an order on Kraken...")
+    place_order('BTCUSD', 'sell', 'market', '0.01')
 
 

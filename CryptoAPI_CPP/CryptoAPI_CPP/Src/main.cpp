@@ -122,8 +122,9 @@ std::string make_kraken_request(const std::string& api_key, const std::string& a
 
     if (curl) {
 
-        // Enable verbose output to see what is being sent
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        //// Enable verbose output to see what is being sent
+        //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);  // DEBUG
+
         std::string nonce = get_current_timestamp();
 		// std::string nonce = "1234567890";  // TEST
 		payload["nonce"] = nonce;
@@ -133,30 +134,15 @@ std::string make_kraken_request(const std::string& api_key, const std::string& a
 
         std::string encoded_payload = encode_map(payload);
 
-
         struct curl_slist* headers = nullptr;
         headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
         headers = curl_slist_append(headers, "Accept: application/json");
         headers = curl_slist_append(headers, ("API-Key: " + api_key).c_str());
-        headers = curl_slist_append(headers, ("API-Sign: " + signature).c_str());
-
-		struct curl_slist* temp = headers;  // DEBUG
-        while (temp != nullptr) {
-            std::cout << "Header: " << temp->data << std::endl;
-            temp = temp->next;
-       }
-
-		//std::cout << "urlpath : " << "https://api.kraken.com" + url_path << std::endl;  // DEBUG
-		std::cout << "postdata : " << encoded_payload << "/ Length :" << encoded_payload.size() << std::endl;  // DEBUG
-		//std::cout << "nonce : " << nonce << std::endl;  // DEBUG
-
-        
+        headers = curl_slist_append(headers, ("API-Sign: " + signature).c_str()); 
         
         curl_easy_setopt(curl, CURLOPT_URL, ("https://api.kraken.com" + url_path).c_str());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, encoded_payload.c_str());
         curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "identity");
-		// curl_easy_setopt(curl, CURLOPT_IGNORE_CONTENT_LENGTH, std::to_string(encode_map(payload).length()).c_str());
-
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
@@ -233,64 +219,14 @@ void place_order(const std::string& pair, const std::string& type, const std::st
     free(api_key);
     free(api_secret);
 }
-//TEST 
-// Function to send a POST request
-void send_post_request(const std::string & url, const std::string & postdata) {
-    CURL* curl;
-    CURLcode res;
-    std::string response;
 
-    // Initialize libcurl
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-    curl = curl_easy_init();
-
-    if (curl) {
-        // Enable verbose output to see what is being sent
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-
-        // Set the URL for the POST request
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-
-        // Set the POST data
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postdata.c_str());
-
-        // Set the function to handle the response
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-
-        // Perform the request
-        res = curl_easy_perform(curl);
-
-        // Check for errors
-        if (res != CURLE_OK) {
-            std::cerr << "CURL error: " << curl_easy_strerror(res) << std::endl;
-        }
-        else {
-            // Print the server's response
-            std::cout << "Response: " << response << std::endl;
-        }
-
-        // Clean up
-        curl_easy_cleanup(curl);
-    }
-
-    // Clean up libcurl global environment
-    curl_global_cleanup();
-}
 
 int main() {
-    //// Example URL and POST data
-    //std::string url = "https://jsonplaceholder.typicode.com/posts";
-    //std::string postdata = "title=foo&body=bar&userId=1";
-
-    //// Send the POST request
-    //send_post_request(url, postdata);
-
     std::cout << "Checking Kraken balance..." << std::endl;
     check_kraken_balance();
 
-    // std::cout << "Placing an order on Kraken..." << std::endl;
-    // place_order("BTCUSD", "sell", "market", "0.01");
+    std::cout << "Placing an order on Kraken..." << std::endl;
+    place_order("BTCUSD", "sell", "market", "0.01");
 
     return 0;
 }
