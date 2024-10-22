@@ -6,6 +6,7 @@ import hashlib
 import hmac
 import base64
 import time
+import sys
 
 # Function to retrieve environment variables
 def get_env_variable(name, default=None):
@@ -152,11 +153,52 @@ def place_order(pair, type, ordertype, volume, price=None):
     except Exception as ex:
         print(f"Unexpected Error: {str(ex)}")
 
+# Infinite loop to repeatedly check the balance
+def check_balance_loop():
+    """Continuously checks balance with delay between requests."""
+    try:
+        # time_to_wait = float(input("Define the time between balance checks (in seconds): "))
+        print("Press Ctrl+C to stop the script.")
+        start_time = time.time()
+        n = 0  # Counter for the number of requests
+
+        while True:
+            try:
+                # Fetch API key and secret from environment variables
+                API_KEY = get_env_variable('KRAKEN_API_KEY')
+                API_SECRET = get_env_variable('KRAKEN_API_SECRET')
+            except ValueError as ve:
+                print(f"Configuration Error: {ve}")
+            except Exception as ex:
+                print(f"Unexpected Error: {str(ex)}")
+            start_request_time = time.time()
+            make_kraken_request(API_KEY, API_SECRET, "/0/private/Balance", {})
+            n += 1
+            end_time = time.time()
+            total_elapsed_time = end_time - start_time
+            elapsed_time = end_time - start_request_time
+            print(f"Total time elapsed: {total_elapsed_time:.2f} seconds")
+            print(f"Time taken for the request number {n} : {elapsed_time:.2f} seconds")
+            # time.sleep(time_to_wait)
+    except KeyboardInterrupt:
+        print("API test interrupted by the user.")
+    except Exception as e:
+        print(f"An error occurred during the API test: {str(e)}")
+
 # Entry point of the script
 if __name__ == "__main__":
     print("Checking Kraken balance...")
     check_kraken_balance()
     print("Placing an order on Kraken...")
     place_order('BTCUSD', 'sell', 'market', '0.01')
+    # Check if the script should run in a loop
+    try :
+        if sys.argv[1] == 'loop':
+            print("Checking the balance in a loop...")
+            check_balance_loop()
+        else:
+            print("Argument not recognized.")
+    except IndexError:
+        print("")
 
 
