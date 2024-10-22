@@ -14,7 +14,10 @@ The project is divided into three parts, based on the programming language and d
 --- 
 
 ## Table of Contents
-
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Acknowledgments](#acknowledgments)
 
 ## Features
 This repository demonstrates how to interact with the Kraken cryptocurrency exchange API to:
@@ -128,6 +131,12 @@ make
 ```bash
 ./CryptoAPI
 ```
+
+---
+
+## Acknowledgments
+- [Hanyang University](http://www.hanyang.ac.kr/)
+
 
 
 
