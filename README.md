@@ -1,6 +1,6 @@
 # Crypto API
 
-This Project is a Student Project for the course "Computer Networks" at Hanyang University, Seoul, South Korea. The project is for education purpose. It may contain errors **It is not intended for professional use**. 
+This Project is a Student Project for the course "*Computer Networks*" at Hanyang University, Seoul, South Korea. The project is for education purpose. It may contain errors **It is not intended for professional use**. 
 
 This repository contains demo code for interacting with the Kraken API, with examples to **check account balance** and **place sell orders**.
 It aims to introduce to encryption keys and HTTP protocol, sending a properly formatted packet.
