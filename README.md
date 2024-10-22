@@ -5,11 +5,10 @@ This Project is a Student Project for the course "Computer Networks" at Hanyang 
 This repository contains demo code for interacting with the Kraken API, with examples to **check account balance** and **place sell orders**.
 It aims to introduce to encryption keys and HTTP protocol, sending a properly formatted packet.
 
-The project is divided into three parts, based on the programming language and development environment. The 3 project's codes do (mostly) the same things:
+The project is divided into two parts, one in python the other in C++. The 2 project's codes do (mostly) the same things:
 
 - **CryptoAPI_PY**: A Python project
-- **CryptoAPI_CPP**: A C++ project for Visual Studio (VS) on Windows.
-- **CryptoAPI_CPP_CMake**: A C++ project using CMake for Unix and macOS users.
+- **CryptoAPI_CPP_CMake**: A C++ project using CMake to build the project. Developed in Visual Studio 2022, compatible with Linux/macOS.
 
 --- 
 
@@ -26,8 +25,7 @@ This repository demonstrates how to interact with the Kraken cryptocurrency exch
    
 The code is provided in three different setups:
 - A **Python** version.
-- A **C++ version** using Visual Studio on Windows.
-- A **C++ version** using CMake for Unix/macOS systems.
+- A **C++ version** using CMake.
 
 ---
 
@@ -36,7 +34,7 @@ The code is provided in three different setups:
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/CryptoAPI.git
+git clone https://github.com/TheHardy04/CryptoAPI.git
 cd CryptoAPI
 ````
 
@@ -74,6 +72,7 @@ export KRAKEN_API_SECRET="YourPrivateAPIKey"
 - Python 3.10 or higher installed on your system.
 #### Running the Python Script
 ```bash
+cd CryptoAPI_PY
 python main.py 
 ```
 
@@ -82,15 +81,14 @@ python main.py
 ### C++ Project for Visual Studio (CryptoAPI_CPP)
 #### Prerequisites
 - Windows OS
-- Visual Studio with C++ development environment set up.
+- Visual Studio with C++ and Cmake development environment set up.
 #### Running the C++ Project in Visual Studio (Windows only)
-1. Open Visual Studio and load the solution file CryptoAPI.sln from the CryptoAPI_CPP directory.
-2. Build the project using Release mode.
-3. Run the project from Visual Studio.
+1. Open Visual Studio and load the project directory. Visual Studio should automatically detect the `CmakeList.txt` file and start configure the project
+2. Run the project from Visual Studio pressing **F5**  (or selecting Debug > Start Debugging).
 
 --- 
 
-### C++ Project with CMake (CryptoAPI_CPP_CMake)
+### C++ Project on Linux/MacOS (CryptoAPI_CPP_CMake)
 #### Prerequisites
 - CMake installed on your system.
 - GCC/Clang for Linux/macOS.
@@ -136,9 +134,4 @@ make
 
 ## Acknowledgments
 - [Hanyang University](http://www.hanyang.ac.kr/)
-
-
-
-
-
-
+- Profesor : 원영준

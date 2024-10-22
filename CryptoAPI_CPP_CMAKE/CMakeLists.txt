@@ -35,4 +35,13 @@ elseif(WIN32)
         ${CMAKE_SOURCE_DIR}/Dependencies/openssl/lib/libssl.lib     # Static SSL library
         ${CMAKE_SOURCE_DIR}/Dependencies/Curl/lib/libcurl.lib       # Static cURL library
     )
+
+    # Copy the DLLs to the output directory after build
+    add_custom_command(TARGET CryptoAPI_CPP POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${CMAKE_SOURCE_DIR}/Dependencies/openssl/bin/libssl-3-x64.dll
+            ${CMAKE_SOURCE_DIR}/Dependencies/openssl/bin/libcrypto-3-x64.dll
+            ${CMAKE_SOURCE_DIR}/Dependencies/Curl/bin/libcurl.dll
+            ${CMAKE_SOURCE_DIR}/Dependencies/zlib/bin/zlib1.dll
+            $<TARGET_FILE_DIR:CryptoAPI_CPP>) # Output directory of the .exe
 endif()
