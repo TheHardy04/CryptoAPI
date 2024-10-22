@@ -23,7 +23,7 @@ This repository demonstrates how to interact with the Kraken cryptocurrency exch
 1. **Check account balance**.
 2. **Place a sell order**.
    
-The code is provided in three different setups:
+The code is provided in Two different programming language:
 - A **Python** version.
 - A **C++ version** using CMake.
 
