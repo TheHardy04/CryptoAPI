@@ -3,8 +3,10 @@
 #include <string>
 #include <map>
 #include <ctime>
+#include <cstring>
 #include <cstdlib>
 #include <sstream>
+#include <iomanip>
 #include <chrono>
 
 #include "curl/curl.h"
