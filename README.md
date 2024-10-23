@@ -133,7 +133,7 @@ make
 ```
 5. Run the  executable
 ```bash
-./CryptoAPI
+./CryptoAPI_CPP
 ```
 
 ---
