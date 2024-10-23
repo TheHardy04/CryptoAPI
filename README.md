@@ -117,7 +117,7 @@ brew install curl openssl
 #### Building 
 1. Navigate to the CryptoAPI_CPP_CMake folder:
 ```bash
-cd CryptoAPI_CPP_CMake
+cd CryptoAPI_CPP_CMAKE
 ```
 2. Create a `build` directory and navigate to it
 ```bash
@@ -125,7 +125,7 @@ mkdir build && cd build
 ```
 3. Run CMake to configure the project:
 ```bash
-Run CMake to configure the project
+cmake ..
 ```
 4. Build the projec
 ```bash
