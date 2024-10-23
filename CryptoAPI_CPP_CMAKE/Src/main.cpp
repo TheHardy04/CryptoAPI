@@ -3,16 +3,15 @@
 #include <string>
 #include <map>
 #include <ctime>
-#include <curl/curl.h>
-#include <openssl/hmac.h>
-#include <openssl/sha.h>
-#include <openssl/bio.h>
-#include <openssl/buffer.h>
-#include <cstring>
 #include <cstdlib>
 #include <sstream>
-#include <iomanip>
 #include <chrono>
+
+#include "curl/curl.h"
+#include "openssl/hmac.h"
+#include "openssl/sha.h"
+#include "openssl/bio.h"
+#include "openssl/buffer.h"
 
 // Function to get the current timestamp in milliseconds
 std::string get_current_timestamp() {
