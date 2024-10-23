@@ -155,31 +155,58 @@ def place_order(pair, type, ordertype, volume, price=None):
 
 # Infinite loop to repeatedly check the balance
 def check_balance_loop():
-    """Continuously checks balance with delay between requests."""
+    """Continuously checks Kraken balance with delay between requests."""
     try:
-        # time_to_wait = float(input("Define the time between balance checks (in seconds): "))
+
         print("Press Ctrl+C to stop the script.")
         start_time = time.time()
         n = 0  # Counter for the number of requests
+        limit_error = False
 
-        while True:
+        while not limit_error:
             try:
                 # Fetch API key and secret from environment variables
                 API_KEY = get_env_variable('KRAKEN_API_KEY')
                 API_SECRET = get_env_variable('KRAKEN_API_SECRET')
             except ValueError as ve:
                 print(f"Configuration Error: {ve}")
+                return  # Exit the loop if there’s a configuration issue
             except Exception as ex:
                 print(f"Unexpected Error: {str(ex)}")
+                return
+
+            # Track the time for each request
             start_request_time = time.time()
-            make_kraken_request(API_KEY, API_SECRET, "/0/private/Balance", {})
+
+            # Make the API request to check the balance
+            response = make_kraken_request(API_KEY, API_SECRET, "/0/private/Balance", {})
             n += 1
+
+            # Check for rate limit errors
+            try:
+                if response.get('error', [None])[0] == 'EAPI:Rate limit exceeded':
+                    limit_error = True
+                    print("Rate limit exceeded. Stopping the script.")
+                    break
+            except (KeyError, IndexError):
+                # Safeguard in case 'error' key or index doesn't exist
+                pass
+
+            # Calculate elapsed time for this request and the total time
             end_time = time.time()
             total_elapsed_time = end_time - start_time
             elapsed_time = end_time - start_request_time
+
             print(f"Total time elapsed: {total_elapsed_time:.2f} seconds")
-            print(f"Time taken for the request number {n} : {elapsed_time:.2f} seconds")
-            # time.sleep(time_to_wait)
+            print(f"Time taken for request number {n}: {elapsed_time:.2f} seconds")
+
+        # Summary of the total requests and time
+        print(f"\nSummary:")
+        print(f" - Total number of requests made: {n}")
+        print(f" - Total time elapsed: {total_elapsed_time:.2f} seconds")
+        if n > 0:
+            print(f" - Average time per request: {total_elapsed_time/n:.2f} seconds")
+
     except KeyboardInterrupt:
         print("API test interrupted by the user.")
     except Exception as e:
@@ -193,12 +220,12 @@ if __name__ == "__main__":
     place_order('BTCUSD', 'sell', 'market', '0.01')
     # Check if the script should run in a loop
     try :
-        if sys.argv[1] == 'loop':
+        if sys.argv[1] in ['rate', 'test', 'loop']:
             print("Checking the balance in a loop...")
             check_balance_loop()
         else:
             print("Argument not recognized.")
     except IndexError:
-        print("")
+        pass
 
 

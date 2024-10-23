@@ -22,6 +22,7 @@ The project is divided into two parts, one in python the other in C++. The 2 pro
 This repository demonstrates how to interact with the Kraken cryptocurrency exchange API to:
 1. **Check account balance**.
 2. **Place a sell order**.
+3. **Test the limit rate of the API** only in Python.
    
 The code is provided in Two different programming language:
 - A **Python** version.
@@ -74,6 +75,11 @@ export KRAKEN_API_SECRET="YourPrivateAPIKey"
 ```bash
 cd CryptoAPI_PY
 python main.py 
+```
+You can test the limits of the API operations by adding `rate` or `test` as an argument when running the code :
+ ```bash
+cd CryptoAPI_PY
+python main.py rate
 ```
 
 ---
