@@ -125,7 +125,7 @@ mkdir build && cd build
 ```
 3. Run CMake to configure the project:
 ```bash
-Run CMake to configure the project
+cmake ..
 ```
 4. Build the projec
 ```bash
