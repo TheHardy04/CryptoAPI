@@ -21,7 +21,7 @@ set(SOURCES
 # Add executable
 add_executable(CryptoAPI_CPP ${SOURCES})
 
-if(UNIX)
+if(UNIX OR APPLE)
     # Find OpenSSL (using system-installed OpenSSL)
     find_package(OpenSSL REQUIRED)
     # Find and Link cURL (using system-installed cURL)
