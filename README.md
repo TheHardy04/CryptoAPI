@@ -127,7 +127,7 @@ mkdir build && cd build
 ```bash
 cmake ..
 ```
-4. Build the projec
+4. Build the project
 ```bash
 make
 ```
